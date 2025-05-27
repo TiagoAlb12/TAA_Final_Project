@@ -3,12 +3,13 @@ import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from models import CNNModel
 from preprocessing import prepare_dataset
 from train_utils import load_cached_data
 import numpy as np
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -83,42 +84,55 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=100, patience=10,
         running_loss = 0.0
         correct = 0
         total = 0
-        for inputs, labels in train_loader:
-            inputs, labels = inputs.to(device), labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels.argmax(dim=1) if labels.ndim > 1 else labels)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item() * inputs.size(0)
-            _, predicted = outputs.max(1)
-            if labels.ndim > 1:
-                labels_max = labels.argmax(dim=1)
-            else:
-                labels_max = labels
-            correct += (predicted == labels_max).sum().item()
-            total += inputs.size(0)
-        train_loss = running_loss / total
-        train_acc = correct / total
-
-        # Validação
-        model.eval()
-        val_loss = 0.0
-        val_correct = 0
-        val_total = 0
-        with torch.no_grad():
-            for inputs, labels in val_loader:
+        # Barra de progresso para treino com métricas em tempo real
+        with tqdm(train_loader, desc=f"Época {epoch+1}/{epochs} [Treino]") as pbar:
+            for inputs, labels in pbar:
                 inputs, labels = inputs.to(device), labels.to(device)
+                optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, labels.argmax(dim=1) if labels.ndim > 1 else labels)
-                val_loss += loss.item() * inputs.size(0)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item() * inputs.size(0)
                 _, predicted = outputs.max(1)
                 if labels.ndim > 1:
                     labels_max = labels.argmax(dim=1)
                 else:
                     labels_max = labels
-                val_correct += (predicted == labels_max).sum().item()
-                val_total += inputs.size(0)
+                correct += (predicted == labels_max).sum().item()
+                total += inputs.size(0)
+                # Atualiza barra
+                pbar.set_postfix({
+                    "loss": f"{running_loss/total:.4f}",
+                    "acc": f"{correct/total:.4f}"
+                })
+        train_loss = running_loss / total
+        train_acc = correct / total
+
+        # Barra de progresso para validação com métricas em tempo real
+        model.eval()
+        val_loss = 0.0
+        val_correct = 0
+        val_total = 0
+        with torch.no_grad():
+            with tqdm(val_loader, desc=f"Época {epoch+1}/{epochs} [Validação]") as pbar:
+                for inputs, labels in pbar:
+                    inputs, labels = inputs.to(device), labels.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, labels.argmax(dim=1) if labels.ndim > 1 else labels)
+                    val_loss += loss.item() * inputs.size(0)
+                    _, predicted = outputs.max(1)
+                    if labels.ndim > 1:
+                        labels_max = labels.argmax(dim=1)
+                    else:
+                        labels_max = labels
+                    val_correct += (predicted == labels_max).sum().item()
+                    val_total += inputs.size(0)
+                    # Atualiza barra
+                    pbar.set_postfix({
+                        "val_loss": f"{val_loss/val_total:.4f}",
+                        "val_acc": f"{val_correct/val_total:.4f}"
+                    })
         val_loss = val_loss / val_total
         val_acc = val_correct / val_total
 

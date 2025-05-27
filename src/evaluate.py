@@ -1,125 +1,142 @@
+import os
+import json
+import time
+import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import (classification_report, confusion_matrix, 
-                            roc_curve, auc, precision_recall_curve)
-from keras.models import load_model
-import json
-import os
+                             roc_curve, auc, precision_recall_curve)
 from sklearn.preprocessing import label_binarize
+from tensorflow.keras.models import load_model
+from train_utils import flatten_images
 
 def evaluate_model(model_path, X_test, y_test, output_dir='results', model_type='cnn'):
     """
-    Avalia um modelo e salva métricas e visualizações
-    
+    Avalia um modelo treinado e salva métricas, gráficos e tempo de inferência.
+
     Args:
-        model_path: caminho para o modelo salvo (.h5 para CNN, .pkl para outros)
-        X_test: dados de teste
-        y_test: labels de teste (one-hot encoded)
-        output_dir: diretório para salvar resultados
+        model_path: Caminho para o modelo salvo (.h5 para CNN, .pkl para SVM/RF)
+        X_test: Dados de teste
+        y_test: Labels de teste (one-hot ou inteiros)
+        output_dir: Diretório onde salvar os resultados
         model_type: 'cnn', 'svm' ou 'rf'
     """
     os.makedirs(output_dir, exist_ok=True)
-    
+
+    # Validação de extensão
+    if model_type == 'cnn' and not model_path.endswith('.h5'):
+        raise ValueError("Para CNN, o modelo deve estar em formato .h5")
+    elif model_type in ['svm', 'rf'] and not model_path.endswith('.pkl'):
+        raise ValueError(f"Para {model_type.upper()}, o modelo deve estar em formato .pkl")
+
+    # Carregamento do modelo
     if model_type == 'cnn':
         model = load_model(model_path)
     else:
-        import joblib
         model = joblib.load(model_path)
-    
+        X_test = flatten_images(X_test)  # SVM e RF requerem flatten
+
+    # Conversão de y_test (one-hot → int)
     if len(y_test.shape) > 1 and y_test.shape[1] > 1:
         y_test_labels = np.argmax(y_test, axis=1)
         n_classes = y_test.shape[1]
     else:
         y_test_labels = y_test
         n_classes = len(np.unique(y_test))
-    
+
+    class_names = ['CN', 'EMCI', 'LMCI', 'AD']
+    y_test_bin = label_binarize(y_test_labels, classes=np.arange(n_classes))
+
+    # Predição e tempo de inferência
+    start = time.time()
     if model_type == 'cnn':
         y_pred = model.predict(X_test)
         y_pred_labels = np.argmax(y_pred, axis=1)
     else:
         y_pred_labels = model.predict(X_test)
         y_pred = model.predict_proba(X_test)
-    
-    # 1. Relatório de Classificação
-    class_names = ['CN', 'EMCI', 'LMCI', 'AD']
+    end = time.time()
+
+    avg_inf_time = (end - start) / len(X_test)
+    with open(f'{output_dir}/{model_type}_inference_time.txt', 'w') as f:
+        f.write(f"Tempo médio por imagem: {avg_inf_time:.4f} segundos\n")
+
+    # Relatório de Classificação
     report = classification_report(
-        y_test_labels, 
-        y_pred_labels, 
-        target_names=class_names,
-        output_dict=True
-    )
-    
-    # Salvar relatório em JSON
+        y_test_labels, y_pred_labels, target_names=class_names, output_dict=True)
+
     with open(f'{output_dir}/{model_type}_classification_report.json', 'w') as f:
         json.dump(report, f, indent=4)
-    
-    # 2. Matriz de Confusão
-    plt.figure(figsize=(10, 8))
+
+    # Matrizes de Confusão
     cm = confusion_matrix(y_test_labels, y_pred_labels)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                xticklabels=class_names, 
-                yticklabels=class_names)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                xticklabels=class_names, yticklabels=class_names)
     plt.title(f'Matriz de Confusão - {model_type.upper()}')
     plt.ylabel('Verdadeiro')
     plt.xlabel('Predito')
+    plt.tight_layout()
     plt.savefig(f'{output_dir}/{model_type}_confusion_matrix.png')
     plt.close()
-    
-    # 3. Curvas ROC (apenas para CNN e modelos com predict_proba)
-    if model_type != 'svm' or hasattr(model, 'predict_proba'):
-        y_test_bin = label_binarize(y_test_labels, classes=np.arange(n_classes))
-        
-        fpr = dict()
-        tpr = dict()
-        roc_auc = dict()
-        
-        for i in range(n_classes):
-            fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_pred[:, i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
-        
-        plt.figure(figsize=(10, 8))
-        colors = ['blue', 'green', 'red', 'purple']
-        for i, color in zip(range(n_classes), colors):
-            plt.plot(fpr[i], tpr[i], color=color,
-                     label=f'ROC {class_names[i]} (AUC = {roc_auc[i]:.2f})')
-        
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('Taxa de Falso Positivo')
-        plt.ylabel('Taxa de Verdadeiro Positivo')
-        plt.title(f'Curvas ROC - {model_type.upper()}')
-        plt.legend(loc="lower right")
-        plt.savefig(f'{output_dir}/{model_type}_roc_curves.png')
-        plt.close()
-    
-    # 4. Curvas Precision-Recall
-    precision = dict()
-    recall = dict()
-    pr_auc = dict()
-    
+
+    cm_norm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm_norm, annot=True, fmt='.2f', cmap='Greens',
+                xticklabels=class_names, yticklabels=class_names)
+    plt.title(f'Matriz Normalizada - {model_type.upper()}')
+    plt.ylabel('Verdadeiro')
+    plt.xlabel('Predito')
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/{model_type}_confusion_matrix_normalized.png')
+    plt.close()
+
+    # Curvas ROC
+    fpr, tpr, roc_auc = {}, {}, {}
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_pred[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    plt.figure(figsize=(8, 6))
+    colors = ['blue', 'green', 'red', 'purple']
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2,
+                 label=f'{class_names[i]} (AUC = {roc_auc[i]:.2f})')
+    plt.plot([0, 1], [0, 1], 'k--', lw=1)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Taxa de Falsos Positivos')
+    plt.ylabel('Taxa de Verdadeiros Positivos')
+    plt.title(f'Curvas ROC - {model_type.upper()}')
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/{model_type}_roc_curves.png')
+    plt.close()
+
+    # Curvas Precision-Recall
+    precision, recall, pr_auc = {}, {}, {}
     for i in range(n_classes):
         precision[i], recall[i], _ = precision_recall_curve(y_test_bin[:, i], y_pred[:, i])
         pr_auc[i] = auc(recall[i], precision[i])
-    
-    plt.figure(figsize=(10, 8))
+
+    plt.figure(figsize=(8, 6))
     for i, color in zip(range(n_classes), colors):
         plt.plot(recall[i], precision[i], color=color,
                  label=f'{class_names[i]} (AUC = {pr_auc[i]:.2f})')
-    
     plt.xlabel('Recall')
     plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
     plt.title(f'Curvas Precision-Recall - {model_type.upper()}')
-    plt.legend(loc="lower left")
+    plt.legend(loc='lower left')
+    plt.tight_layout()
     plt.savefig(f'{output_dir}/{model_type}_precision_recall.png')
     plt.close()
-    
-    # 5. Salvar métricas importantes em um resumo
+
+    # Resumo de métricas
     metrics_summary = {
         'accuracy': report['accuracy'],
+        'inference_time_avg': round(avg_inf_time, 4),
         'weighted_avg': {
             'precision': report['weighted avg']['precision'],
             'recall': report['weighted avg']['recall'],
@@ -134,36 +151,37 @@ def evaluate_model(model_path, X_test, y_test, output_dir='results', model_type=
             } for i in range(n_classes)
         }
     }
-    
+
     with open(f'{output_dir}/{model_type}_metrics_summary.json', 'w') as f:
         json.dump(metrics_summary, f, indent=4)
-    
-    print(f"Avaliação concluída. Resultados salvos em {output_dir}/")
+
+    print(f"[✓] Avaliação concluída para modelo '{model_type.upper()}'. Resultados guardados em: {output_dir}/")
 
 def load_test_data(data_dir):
-    """Carrega dados de teste pré-processados"""
+    """
+    Carrega dados de teste a partir de ficheiros .npy
+    """
     X_test = np.load(f'{data_dir}/X_test.npy')
     y_test = np.load(f'{data_dir}/y_test.npy')
     return X_test, y_test
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, required=True,
-                       help='Caminho para o modelo salvo')
+                        help='Caminho para o modelo salvo')
     parser.add_argument('--test_data', type=str, required=True,
-                       help='Diretório com dados de teste')
+                        help='Diretório com dados de teste')
     parser.add_argument('--model_type', type=str, required=True,
-                       choices=['cnn', 'svm', 'rf'],
-                       help='Tipo de modelo a ser avaliado')
+                        choices=['cnn', 'svm', 'rf'],
+                        help='Tipo de modelo: cnn, svm ou rf')
     parser.add_argument('--output_dir', type=str, default='results',
-                       help='Diretório para salvar resultados')
-    
+                        help='Diretório para salvar os resultados')
+
     args = parser.parse_args()
-    
+
     X_test, y_test = load_test_data(args.test_data)
-    
     evaluate_model(
         model_path=args.model_path,
         X_test=X_test,

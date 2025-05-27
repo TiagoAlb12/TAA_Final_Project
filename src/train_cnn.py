@@ -1,7 +1,7 @@
 import logging
 import json
-from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from models import create_cnn_model
 from preprocessing import prepare_dataset
 

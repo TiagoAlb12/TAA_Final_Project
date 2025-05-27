@@ -1,2 +1,3 @@
-Go to https://pytorch.org/get-started/locally/ and install on your venv.
+Go to https://pytorch.org/get-started/locally/ and install on your venv using your machine configuration.
+For CUDA version check nvidia-smi (might need to install NVIDIA drivers in Ubuntu)
 BE CAREFUL IT DOES TAKE SOME SPACE!

@@ -3,7 +3,7 @@ import logging
 import joblib
 import numpy as np
 from preprocessing import prepare_dataset
-from train_utils import flatten_images, get_svm_pipeline
+from train_utils import flatten_images, get_svm_pipeline, load_cached_data  # <- Adicionado
 
 logging.basicConfig(level=logging.INFO)
 
@@ -13,8 +13,13 @@ def main():
     parser.add_argument('--model_path', type=str, default='svm_model.pkl', help="Caminho para salvar o modelo SVM")
     args = parser.parse_args()
 
-    logging.info("Preparando dados de treino...")
-    (X_train, y_train), _, _ = prepare_dataset(args.data_dir, save_numpy=True)
+    logging.info("Carregando ou preparando dados de treino...")
+    cached = load_cached_data(args.data_dir)
+    if cached:
+        (X_train, y_train), _, _ = cached
+    else:
+        (X_train, y_train), _, _ = prepare_dataset(args.data_dir, save_numpy=True)
+
     X_train_flat = flatten_images(X_train)
     y_train_class = np.argmax(y_train, axis=1)
 

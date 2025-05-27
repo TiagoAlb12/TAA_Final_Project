@@ -1,8 +1,10 @@
+import os
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
+import logging
 
 def flatten_images(X):
     """
@@ -25,3 +27,20 @@ def get_rf_pipeline():
     pca = PCA(n_components=0.95, svd_solver='full')
     rf = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
     return make_pipeline(pca, rf)
+
+def load_cached_data(data_dir):
+    """
+    Tenta carregar os dados já pré-processados (em .npy).
+    """
+    try:
+        X_train = np.load(os.path.join(data_dir, 'X_train.npy'))
+        y_train = np.load(os.path.join(data_dir, 'y_train.npy'))
+        X_val   = np.load(os.path.join(data_dir, 'X_val.npy'))
+        y_val   = np.load(os.path.join(data_dir, 'y_val.npy'))
+        X_test  = np.load(os.path.join(data_dir, 'X_test.npy'))
+        y_test  = np.load(os.path.join(data_dir, 'y_test.npy'))
+        logging.info("[✓] Dados carregados a partir de ficheiros .npy.")
+        return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+    except Exception as e:
+        logging.warning(f"[!] Não foi possível carregar dados .npy: {e}")
+        return None

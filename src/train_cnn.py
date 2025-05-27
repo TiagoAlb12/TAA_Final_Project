@@ -4,6 +4,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from models import create_cnn_model
 from preprocessing import prepare_dataset
+from train_utils import load_cached_data  # NOVO
 
 logging.basicConfig(level=logging.INFO)
 
@@ -11,15 +12,21 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=100, patience=10)
     """
     Treina um modelo CNN com os dados fornecidos.
     """
-    logging.info("Preparando o dataset...")
-    (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir)
-    
+    logging.info("Preparando o dataset para treino da CNN...")
+
+    cached = load_cached_data(data_dir)
+    if cached:
+        (X_train, y_train), (X_val, y_val), _ = cached
+    else:
+        logging.info("[i] Dados não encontrados em cache. A processar imagens...")
+        (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
+
     if len(X_train) == 0 or len(y_train) == 0:
         raise ValueError("Os dados de treinamento estão vazios.")
     if len(X_val) == 0 or len(y_val) == 0:
         raise ValueError("Os dados de validação estão vazios.")
     
-    logging.info("Criando o modelo...")
+    logging.info("Criando o modelo CNN...")
     model = create_cnn_model()
     
     callbacks = [
@@ -38,7 +45,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=100, patience=10)
         fill_mode='nearest'
     )
     
-    logging.info("Iniciando a aprendizagem...")
+    logging.info("Iniciando o treino...")
     history = model.fit(
         datagen.flow(X_train, y_train, batch_size=batch_size),
         validation_data=(X_val, y_val),
@@ -46,9 +53,9 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=100, patience=10)
         callbacks=callbacks
     )
     
-    logging.info("Aprendizagem concluída. A salvar o histórico...")
+    logging.info("Treino concluído. A guardar o histórico...")
     with open('training_history.json', 'w') as f:
         json.dump(history.history, f)
     
-    logging.info(f"Modelo Guardado em: {model_save_path}")
+    logging.info(f"[✓] Modelo CNN guardado em: {model_save_path}")
     return history

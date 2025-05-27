@@ -14,7 +14,7 @@ def main():
     args = parser.parse_args()
 
     logging.info("Carregando ou preparando dados de treino...")
-    cached = load_cached_data(args.data_dir)
+    cached = load_cached_data()
     if cached:
         (X_train, y_train), _, _ = cached
     else:

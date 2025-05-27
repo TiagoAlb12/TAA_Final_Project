@@ -28,17 +28,17 @@ def get_rf_pipeline():
     rf = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
     return make_pipeline(pca, rf)
 
-def load_cached_data(data_dir):
+def load_cached_data():
     """
-    Tenta carregar os dados já pré-processados (em .npy).
+    Tenta carregar os dados já pré-processados (em .npy) do diretório atual.
     """
     try:
-        X_train = np.load(os.path.join(data_dir, 'X_train.npy'))
-        y_train = np.load(os.path.join(data_dir, 'y_train.npy'))
-        X_val   = np.load(os.path.join(data_dir, 'X_val.npy'))
-        y_val   = np.load(os.path.join(data_dir, 'y_val.npy'))
-        X_test  = np.load(os.path.join(data_dir, 'X_test.npy'))
-        y_test  = np.load(os.path.join(data_dir, 'y_test.npy'))
+        X_train = np.load('X_train.npy')
+        y_train = np.load('y_train.npy')
+        X_val   = np.load('X_val.npy')
+        y_val   = np.load('y_val.npy')
+        X_test  = np.load('X_test.npy')
+        y_test  = np.load('y_test.npy')
         logging.info("[✓] Dados carregados a partir de ficheiros .npy.")
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     except Exception as e:

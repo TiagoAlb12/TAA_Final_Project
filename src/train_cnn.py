@@ -14,7 +14,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=100, patience=10)
     """
     logging.info("Preparando o dataset para treino da CNN...")
 
-    cached = load_cached_data(data_dir)
+    cached = load_cached_data()
     if cached:
         (X_train, y_train), (X_val, y_val), _ = cached
     else:

@@ -1,0 +1,2 @@
+Go to https://pytorch.org/get-started/locally/ and install on your venv.
+BE CAREFUL IT DOES TAKE SOME SPACE!

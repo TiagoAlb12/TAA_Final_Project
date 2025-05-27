@@ -173,5 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# npy
+# Models file
 *.npy
+*.json
+*.h5

@@ -8,31 +8,37 @@ import seaborn as sns
 from sklearn.metrics import (classification_report, confusion_matrix, 
                              roc_curve, auc, precision_recall_curve)
 from sklearn.preprocessing import label_binarize
-from tensorflow.keras.models import load_model
+import torch
+from models import CNNModel
 from train_utils import flatten_images
 
-def evaluate_model(model_path, X_test, y_test, output_dir='results', model_type='cnn'):
+def evaluate_model(model_path, X_test, y_test, output_dir='results', model_type='cnn', device=None):
     """
     Avalia um modelo treinado e salva métricas, gráficos e tempo de inferência.
 
     Args:
-        model_path: Caminho para o modelo salvo (.h5 para CNN, .pkl para SVM/RF)
+        model_path: Caminho para o modelo salvo (.pt para CNN, .pkl para SVM/RF)
         X_test: Dados de teste
         y_test: Labels de teste (one-hot ou inteiros)
         output_dir: Diretório onde salvar os resultados
         model_type: 'cnn', 'svm' ou 'rf'
+        device: 'cuda' ou 'cpu'
     """
     os.makedirs(output_dir, exist_ok=True)
+    device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Validação de extensão
-    if model_type == 'cnn' and not model_path.endswith('.h5'):
-        raise ValueError("Para CNN, o modelo deve estar em formato .h5")
+    if model_type == 'cnn' and not model_path.endswith('.pt'):
+        raise ValueError("Para CNN, o modelo deve estar em formato .pt")
     elif model_type in ['svm', 'rf'] and not model_path.endswith('.pkl'):
         raise ValueError(f"Para {model_type.upper()}, o modelo deve estar em formato .pkl")
 
     # Carregamento do modelo
     if model_type == 'cnn':
-        model = load_model(model_path)
+        model = CNNModel()
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.to(device)
+        model.eval()
     else:
         model = joblib.load(model_path)
         X_test = flatten_images(X_test)  # SVM e RF requerem flatten
@@ -51,8 +57,14 @@ def evaluate_model(model_path, X_test, y_test, output_dir='results', model_type=
     # Predição e tempo de inferência
     start = time.time()
     if model_type == 'cnn':
-        y_pred = model.predict(X_test)
-        y_pred_labels = np.argmax(y_pred, axis=1)
+        # Garantir batch e channel
+        if X_test.ndim == 3:
+            X_test = np.expand_dims(X_test, 1)  # [N, 1, H, W]
+        X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+        with torch.no_grad():
+            y_pred_logits = model(X_test_tensor)
+            y_pred = torch.softmax(y_pred_logits, dim=1).cpu().numpy()
+            y_pred_labels = np.argmax(y_pred, axis=1)
     else:
         y_pred_labels = model.predict(X_test)
         y_pred = model.predict_proba(X_test)

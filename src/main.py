@@ -3,7 +3,6 @@ import logging
 import joblib
 import numpy as np
 from preprocessing import prepare_dataset
-from models import create_cnn_model
 from train_cnn import train_cnn
 from train_utils import flatten_images, get_svm_pipeline, get_rf_pipeline
 from evaluate import evaluate_model

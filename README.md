@@ -1,36 +1,55 @@
-# TAA_Final_Project
-Projeto Final de Grupo TAA
+Final Group Project TAA
 
+# Dependencies
 
-# Algoritmo CNN:
+1. **Create a Virtual Environment:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    ```
 
-*(Dentro do venv)*
+2. **Install Required Packages:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## 1. Preparar dados (só é preciso 1x)
+3. **Install PyTorch:**
+    - Refer to the official [PyTorch installation guide](https://pytorch.org/get-started/locally/) for the correct command based on your system (and CUDA version).
+    - Alternatively, check the `PyTorchInstalation.txt` file in the project directory for installation instructions.
+
+4. **Install Additional Dependencies (if any):**
+    - Follow any extra instructions provided in the `requirements.txt` or project documentation.
+
+Make sure all dependencies are installed before running the project.
+
+# CNN Algorithm:
+
+*(Inside the venv)*
+
+## 1. Prepare data (only needed once)
 ```bash
 python3 src/main.py --task prepare --data_dir images/OriginalDataset
 ```
 
-## 2. Treinar com ResNet18
+## 2. Train with ResNet18
 ```bash
 python3 src/main.py --task train --model_type cnn --data_dir images/OriginalDataset --model_path cnn_resnet18.pth --epochs 30 --batch_size 32
 ```
 
-## 3. Avaliar modelo
+## 3. Evaluate model
 ```bash
 python3 src/main.py --task evaluate --model_type cnn --data_dir images/OriginalDataset --model_path cnn_resnet18.pth --output_dir results_resnet
 ```
 
+# SVM Algorithm:
 
-# Algoritmo SVM:
+*(Specific script)*
 
-*(Script específico)*
+## 1. Activate the venv
 
-## 1. Abrir o venv
+## 2. Go to src/utils
 
-## 2. Ir para src/utils
-
-## 3. Executar os seguintes comando:
+## 3. Run the following commands:
 ```bash
 chmod +x run_svm.sh
 ./run_svm.sh

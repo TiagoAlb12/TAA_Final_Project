@@ -1,3 +1,5 @@
+# Please refer to README.md for dependencies intallation before running any of the commands.
+
 import argparse
 import logging
 import joblib

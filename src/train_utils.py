@@ -8,13 +8,13 @@ import logging
 
 def flatten_images(X):
     """
-    Converte imagens (N, H, W, C) em vetores 1D por imagem.
+    Converts images (N, H, W, C) into 1D vectors per image.
     """
     return X.reshape((X.shape[0], -1))
 
 def get_svm_pipeline():
     """
-    Retorna um pipeline com PCA + SVM (configurado).
+    Returns a pipeline with PCA and SVM (configured).
     """
     pca = PCA(n_components=0.95, svd_solver='full')
     svm = SVC(kernel='rbf', C=10, gamma=0.01, probability=True)
@@ -22,7 +22,7 @@ def get_svm_pipeline():
 
 def get_rf_pipeline():
     """
-    Retorna um pipeline com PCA + Random Forest (configurado).
+    Returns a pipeline with PCA and Random Forest (configured).
     """
     pca = PCA(n_components=50)
     rf = RandomForestClassifier(n_estimators=50, max_depth=10, random_state=42)
@@ -30,7 +30,7 @@ def get_rf_pipeline():
 
 def load_cached_data():
     """
-    Tenta carregar os dados já pré-processados (em .npy) do diretório atual.
+    Tries to load pre-processed data (.npy) from the current directory.
     """
     try:
         X_train = np.load('X_train.npy')
@@ -39,8 +39,8 @@ def load_cached_data():
         y_val   = np.load('y_val.npy')
         X_test  = np.load('X_test.npy')
         y_test  = np.load('y_test.npy')
-        logging.info("[✓] Dados carregados a partir de ficheiros .npy.")
+        logging.info("Data loaded from .npy files.")
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     except Exception as e:
-        logging.warning(f"[!] Não foi possível carregar dados .npy: {e}")
+        logging.warning(f"Could not load .npy data: {e}")
         return None

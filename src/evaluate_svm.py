@@ -36,7 +36,6 @@ def main():
     plt.ylabel("Verdadeiro")
     plt.title("Matriz de Confusão - SVM")
     plt.savefig(os.path.join(project_root, "confusion_matrix_svm.png"))
-    plt.show()
 
 if __name__ == "__main__":
     main()

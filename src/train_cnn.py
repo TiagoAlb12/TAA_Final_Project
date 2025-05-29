@@ -15,22 +15,22 @@ logging.basicConfig(level=logging.INFO)
 
 def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, device=None):
     device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
-    logging.info(f"Usando dispositivo: {device}")
+    logging.info(f"Using device: {device}")
 
     cached = load_cached_data()
     if cached:
         (X_train, y_train), (X_val, y_val), _ = cached
     else:
-        logging.info("[i] Dados não encontrados em cache. A processar imagens...")
+        logging.info("Data not found in cache. Processing images...")
         (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
 
     X_train = X_train.astype(np.float32)
     X_val = X_val.astype(np.float32)
 
     if len(X_train) == 0 or len(y_train) == 0:
-        raise ValueError("Os dados de treinamento estão vazios.")
+        raise ValueError("Training data is empty.")
     if len(X_val) == 0 or len(y_val) == 0:
-        raise ValueError("Os dados de validação estão vazios.")
+        raise ValueError("Validation data is empty.")
 
     transform = transforms.Compose([
         transforms.ToPILImage(),
@@ -78,14 +78,14 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     patience_counter = 0
     history = {'loss': [], 'val_loss': [], 'accuracy': [], 'val_accuracy': []}
 
-    logging.info("Iniciando o treino...")
+    logging.info("Starting training...")
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
         correct = 0
         total = 0
 
-        with tqdm(train_loader, desc=f"Época {epoch+1}/{epochs} [Treino]") as pbar:
+        with tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs} [Train]") as pbar:
             for inputs, labels in pbar:
                 inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
@@ -112,7 +112,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         val_correct = 0
         val_total = 0
         with torch.no_grad():
-            with tqdm(val_loader, desc=f"Época {epoch+1}/{epochs} [Validação]") as pbar:
+            with tqdm(val_loader, desc=f"Epoch {epoch+1}/{epochs} [Validation]") as pbar:
                 for inputs, labels in pbar:
                     inputs, labels = inputs.to(device), labels.to(device)
                     outputs = model(inputs)
@@ -146,12 +146,12 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                logging.info("Early stopping!")
+                logging.info("Early stopping.")
                 break
 
-    logging.info("Treino concluído. A guardar o histórico...")
+    logging.info("Training finished. Saving history...")
     with open('training_history.json', 'w') as f:
         json.dump(history, f)
 
-    logging.info(f"[✓] Modelo CNN guardado em: {model_save_path}")
+    logging.info(f"Model saved at: {model_save_path}")
     return history

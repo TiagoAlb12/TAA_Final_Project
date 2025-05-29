@@ -54,3 +54,20 @@ python3 src/main.py --task evaluate --model_type cnn --data_dir images/OriginalD
 chmod +x run_svm.sh
 ./run_svm.sh
 ```
+
+---
+---
+
+# Algoritmo RF
+
+*(Script específico)*
+
+### 1. Abrir o venv
+
+### 2. Ir para src/utils
+
+### 3. Executar os seguintes comando:
+```bash
+chmod +x run_rf.sh
+./run_rf.sh
+```

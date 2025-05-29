@@ -1,15 +1,11 @@
 import numpy as np
 import cv2, os
 from sklearn.model_selection import train_test_split
-from keras.utils import to_categorical
 import logging
 
 logging.basicConfig(level=logging.INFO)
 
 def load_image_paths_and_labels(data_dir):
-    """
-    Carrega os caminhos das imagens e os rótulos correspondentes.
-    """
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"O diretório {data_dir} não foi encontrado.")
     if not os.listdir(data_dir):
@@ -31,9 +27,6 @@ def load_image_paths_and_labels(data_dir):
     return image_paths, labels
 
 def preprocess_image(path, target_size=(224, 224)):
-    """
-    Pré-processa uma única imagem (escala de cinzentos, redimensionamento, suavização, normalização).
-    """
     try:
         img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
         if img is None:
@@ -48,9 +41,6 @@ def preprocess_image(path, target_size=(224, 224)):
         return None
 
 def load_and_preprocess_images(image_paths, target_size=(224, 224)):
-    """
-    Carrega e pré-processa imagens MRI a partir de uma lista de caminhos.
-    """
     images = []
     for path in image_paths:
         img = preprocess_image(path, target_size)
@@ -59,29 +49,24 @@ def load_and_preprocess_images(image_paths, target_size=(224, 224)):
     return np.array(images)
 
 def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, num_classes=None, save_numpy=True):
-    """
-    Prepara o dataset com divisão estratificada e opção de salvar os arrays em .npy.
-    """
     logging.info("Carregando caminhos das imagens e rótulos...")
     image_paths, labels = load_image_paths_and_labels(data_dir)
-    
+
     X_train_val, X_test, y_train_val, y_test = train_test_split(
         image_paths, labels, test_size=test_size, stratify=labels)
-    
+
     X_train, X_val, y_train, y_val = train_test_split(
         X_train_val, y_train_val, test_size=val_size / (1 - test_size), stratify=y_train_val)
-    
+
     logging.info("Pré-processando imagens...")
     X_train = load_and_preprocess_images(X_train)
     X_val = load_and_preprocess_images(X_val)
     X_test = load_and_preprocess_images(X_test)
 
-    if num_classes is None:
-        num_classes = len(np.unique(labels))
-
-    y_train = to_categorical(y_train, num_classes=num_classes)
-    y_val = to_categorical(y_val, num_classes=num_classes)
-    y_test = to_categorical(y_test, num_classes=num_classes)
+    # Convertendo os rótulos para arrays de inteiros (sem one-hot)
+    y_train = np.array(y_train)
+    y_val = np.array(y_val)
+    y_test = np.array(y_test)
 
     if save_numpy:
         logging.info("Salvando arrays pré-processados em .npy...")

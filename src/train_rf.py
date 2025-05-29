@@ -2,7 +2,7 @@ import argparse
 import logging
 import joblib
 import numpy as np
-from preprocessing import prepare_dataset
+from preprocessing import prepare_dataset_rf
 from train_utils import flatten_images, get_rf_pipeline, load_cached_data  # <- NOVO
 
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +18,7 @@ def main():
     if cached:
         (X_train, y_train), _, _ = cached
     else:
-        (X_train, y_train), _, _ = prepare_dataset(args.data_dir, save_numpy=True)
+        (X_train, y_train), _, _ = prepare_dataset_rf(args.data_dir, save_numpy=True)
 
     X_train_flat = flatten_images(X_train)
     y_train_class = np.argmax(y_train, axis=1)

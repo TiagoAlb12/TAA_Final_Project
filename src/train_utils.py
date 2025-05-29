@@ -24,8 +24,8 @@ def get_rf_pipeline():
     """
     Retorna um pipeline com PCA + Random Forest (configurado).
     """
-    pca = PCA(n_components=0.95, svd_solver='full')
-    rf = RandomForestClassifier(n_estimators=100, max_depth=20, random_state=42)
+    pca = PCA(n_components=50)
+    rf = RandomForestClassifier(n_estimators=50, max_depth=10, random_state=42)
     return make_pipeline(pca, rf)
 
 def load_cached_data():

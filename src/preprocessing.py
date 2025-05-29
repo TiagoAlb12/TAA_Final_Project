@@ -30,7 +30,7 @@ def load_image_paths_and_labels(data_dir):
 
     return image_paths, labels
 
-def preprocess_image(path, target_size=(224, 224)):
+def preprocess_image(path, target_size=(64, 64)):
     """
     Pré-processa uma única imagem (escala de cinzentos, redimensionamento, suavização, normalização).
     """

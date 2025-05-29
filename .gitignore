@@ -177,6 +177,7 @@ cython_debug/
 *.npy
 *.json
 *.h5
-
 *.pth
 *.pt
+*.pkl
+*.png

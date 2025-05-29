@@ -30,7 +30,7 @@ def load_image_paths_and_labels(data_dir):
 
     return image_paths, labels
 
-def preprocess_image(path, target_size=(64, 64)):
+def preprocess_image(path, target_size=(224, 224)):
     """
     Pré-processa uma única imagem (escala de cinzentos, redimensionamento, suavização, normalização).
     """
@@ -93,4 +93,63 @@ def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, num_classes=None, s
         np.save("y_test.npy", y_test)
 
     logging.info("Pré-processamento concluído.")
+    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+
+# RF
+def preprocess_image_rf(path, target_size=(64, 64)):
+    """
+    Pré-processa uma imagem para modelos tradicionais (Random Forest, SVM) com menor resolução.
+    """
+    try:
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            raise ValueError(f"Erro ao carregar a imagem: {path}")
+        img = cv2.resize(img, target_size)
+        img = cv2.GaussianBlur(img, (3, 3), 0)
+        img = img / 255.0
+        img = np.expand_dims(img, axis=-1)
+        return img
+    except Exception as e:
+        logging.error(f"Erro ao processar a imagem {path}: {e}")
+        return None
+
+def load_and_preprocess_images_rf(image_paths, target_size=(64, 64)):
+    """
+    Carrega e pré-processa imagens em baixa resolução (64x64).
+    """
+    images = []
+    for path in image_paths:
+        img = preprocess_image_rf(path, target_size)
+        if img is not None:
+            images.append(img)
+    return np.array(images)
+
+def prepare_dataset_rf(data_dir, test_size=0.15, val_size=0.15, save_numpy=True):
+    """
+    Prepara o dataset para Random Forest/SVM com imagens pequenas (64x64) e sem one-hot.
+    """
+    logging.info("Carregando caminhos das imagens e rótulos...")
+    image_paths, labels = load_image_paths_and_labels(data_dir)
+    
+    X_train_val, X_test, y_train_val, y_test = train_test_split(
+        image_paths, labels, test_size=test_size, stratify=labels)
+    
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_train_val, y_train_val, test_size=val_size / (1 - test_size), stratify=y_train_val)
+    
+    logging.info("Pré-processando imagens em baixa resolução...")
+    X_train = load_and_preprocess_images_rf(X_train)
+    X_val = load_and_preprocess_images_rf(X_val)
+    X_test = load_and_preprocess_images_rf(X_test)
+
+    if save_numpy:
+        logging.info("Salvando arrays pequenos em .npy...")
+        np.save("X_train_rf.npy", X_train)
+        np.save("y_train_rf.npy", y_train)
+        np.save("X_val_rf.npy", X_val)
+        np.save("y_val_rf.npy", y_val)
+        np.save("X_test_rf.npy", X_test)
+        np.save("y_test_rf.npy", y_test)
+
+    logging.info("Pré-processamento (small) concluído.")
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)

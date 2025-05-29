@@ -4,6 +4,7 @@ import logging
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,6 +13,10 @@ def main():
     model = joblib.load("rf_model.pkl")
 
     logging.info("Carregando dados de teste...")
+
+    if not os.path.exists("X_test.npy") or not os.path.exists("y_test.npy"):
+        raise FileNotFoundError("Os ficheiros 'X_test.npy' e 'y_test.npy' não foram encontrados. Corre primeiro o extract_features.py")
+
     X_test = np.load("X_test.npy")
     y_test = np.load("y_test.npy")
 

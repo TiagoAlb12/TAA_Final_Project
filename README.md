@@ -1,3 +1,4 @@
+# TAA_Final_Project
 Final Group Project TAA
 
 # Dependencies
@@ -55,18 +56,15 @@ chmod +x run_svm.sh
 ./run_svm.sh
 ```
 
----
----
-
 # Algoritmo RF
 
-*(Script específico)*
+*(Specific script)*
 
-### 1. Abrir o venv
+## 1. Activate the venv
 
-### 2. Ir para src/utils
+## 2. Go to src/utils
 
-### 3. Executar os seguintes comando:
+## 3. Run the following commands:
 ```bash
 chmod +x run_rf.sh
 ./run_rf.sh

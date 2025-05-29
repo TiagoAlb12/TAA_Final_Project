@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from models import get_resnet18  # <-- usa ResNet18 agora
+from models import get_resnet18
 from preprocessing import prepare_dataset
 from train_utils import load_cached_data
 import numpy as np
@@ -32,7 +32,6 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     if len(X_val) == 0 or len(y_val) == 0:
         raise ValueError("Os dados de validação estão vazios.")
 
-    # Transformações (com augmentação)
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.RandomRotation(15),
@@ -40,7 +39,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         transforms.ColorJitter(brightness=0.2),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.485,), (0.229,))  # Normalização para grayscale
+        transforms.Normalize((0.485,), (0.229,))
     ])
     val_transform = transforms.Compose([
         transforms.ToTensor(),
@@ -70,7 +69,6 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
-    # Instanciar modelo ResNet18 adaptado
     model = get_resnet18(num_classes=4, grayscale=True).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=3e-4)

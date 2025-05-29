@@ -13,15 +13,22 @@ def train_model(args):
     if args.model_type == 'cnn':
         train_cnn(args.data_dir, args.model_path, batch_size=args.batch_size,
                   epochs=args.epochs, patience=args.patience)
+
     else:
-        # SVM ou RF
-        (X_train, y_train), _, _ = prepare_dataset(args.data_dir, save_numpy=True)
-        X_train_flat = flatten_images(X_train)
-        y_train_class = np.argmax(y_train, axis=1)
+        if args.use_resnet_features:
+            logging.info("[i] Usando features extraídas por ResNet18 para treino do modelo...")
+            X_train = np.load("X_train_features.npy")
+            y_train = np.load("y_train.npy")
+            X_train_flat = X_train
+        else:
+            logging.info("[i] Usando imagens cruas (flattened) para treino do modelo...")
+            (X_train, y_train), _, _ = prepare_dataset(args.data_dir, save_numpy=True)
+            X_train_flat = flatten_images(X_train)
+            y_train = np.argmax(y_train, axis=1)
 
         model = get_svm_pipeline() if args.model_type == 'svm' else get_rf_pipeline()
         logging.info(f"Treinando modelo {args.model_type.upper()}...")
-        model.fit(X_train_flat, y_train_class)
+        model.fit(X_train_flat, y_train)
 
         joblib.dump(model, args.model_path)
         logging.info(f"[✓] Modelo salvo em: {args.model_path}")
@@ -38,6 +45,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=32, help="Tamanho do batch (apenas CNN)")
     parser.add_argument('--epochs', type=int, default=10, help="Número de épocas (apenas CNN)")
     parser.add_argument('--patience', type=int, default=5, help="Patience para early stopping (apenas CNN)")
+    parser.add_argument('--use_resnet_features', action='store_true', help="Usar features da ResNet18 para SVM/RF")
 
     args = parser.parse_args()
 
@@ -50,12 +58,24 @@ def main():
         train_model(args)
 
     elif args.task == 'evaluate':
-        logging.info("Carregando dados de teste e avaliando o modelo...")
-        (_, _), (_, _), (X_test, y_test) = prepare_dataset(args.data_dir, save_numpy=True)
+        if args.use_resnet_features:
+            logging.info("Carregando features de teste...")
+            X_test = np.load("X_test_features.npy")
+            y_test = np.load("y_test.npy")
+        else:
+            logging.info("Carregando dados de teste para avaliação...")
+            (_, _), (_, _), (X_test, y_test) = prepare_dataset(args.data_dir, save_numpy=True)
+
         evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir, model_type=args.model_type)
 
     elif args.task == 'full':
-        logging.info("Executando o pipeline completo...")
+        logging.info("Executando pipeline completo...")
+
+        if args.use_resnet_features:
+            logging.warning("[!] Full pipeline com ResNet18 requer extração de features fora do main.py")
+            logging.info("Executa `extract_features.py` antes de usar este modo com `--use_resnet_features`.")
+            return
+
         (X_train, y_train), (X_val, y_val), (X_test, y_test) = prepare_dataset(args.data_dir, save_numpy=True)
         train_model(args)
         evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir, model_type=args.model_type)

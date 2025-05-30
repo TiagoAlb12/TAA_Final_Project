@@ -7,6 +7,7 @@ import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc, precision_recall_curve
 import torch
 from models import get_resnet18
+import torchvision.transforms as transforms
 
 def evaluate_model(model_path, X_test, y_test, output_dir='results', device=None):
     """
@@ -26,13 +27,27 @@ def evaluate_model(model_path, X_test, y_test, output_dir='results', device=None
     n_classes = len(np.unique(y_test))
     class_names = ['MildDemented', 'ModerateDemented', 'NonDemented', 'VeryMildDemented']
 
-    # Predição e tempo de inferência
+    # Transformação para inferência
+    inference_transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485,), (0.229,))
+    ])
+
+    # Aplica a transform a cada imagem e empilha num tensor
     start = time.time()
-    if X_test.ndim == 3:
-        X_test = np.expand_dims(X_test, 1)  # [N, 1, H, W]
-    elif X_test.shape[-1] == 1:
-        X_test = np.transpose(X_test, (0, 3, 1, 2))  # [N, H, W, 1] -> [N, 1, H, W]
-    X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    X_test_transformed = []
+    for i in range(len(X_test)):
+        # Se for grayscale, X_test[i] terá shape [H, W], senão [H, W, C]
+        img = X_test[i]
+        if img.ndim == 2:  # grayscale 2D
+            # Converte para 3D antes de ToPILImage?
+            img = np.expand_dims(img, -1)
+        img_transformed = inference_transform(img)
+        X_test_transformed.append(img_transformed)
+    X_test_tensor = torch.stack(X_test_transformed).to(device)
+
     with torch.no_grad():
         y_pred_logits = model(X_test_tensor)
         y_pred = torch.softmax(y_pred_logits, dim=1).cpu().numpy()

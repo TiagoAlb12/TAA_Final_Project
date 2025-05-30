@@ -146,7 +146,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         else:
             patience_counter += 1
             if patience_counter >= patience:
-                logging.info("Early stopping.")
+                logging.info("Early stopping due to no improvement in validation loss.")
                 break
 
     logging.info("Training finished. Saving history...")

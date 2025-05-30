@@ -66,7 +66,7 @@ def main():
             logging.info("Loading test data for evaluation...")
             (_, _), (_, _), (X_test, y_test) = prepare_dataset(args.data_dir, save_numpy=True)
 
-        evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir, model_type=args.model_type)
+        evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir)
 
     elif args.task == 'full':
         logging.info("Running full pipeline...")
@@ -79,7 +79,7 @@ def main():
 
         (X_train, y_train), (X_val, y_val), (X_test, y_test) = prepare_dataset(args.data_dir, save_numpy=True)
         train_model(args)
-        evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir, model_type=args.model_type)
+        evaluate_model(args.model_path, X_test, y_test, output_dir=args.output_dir)
         logging.info("Full pipeline executed successfully.")
 
     logging.info("Finished.")

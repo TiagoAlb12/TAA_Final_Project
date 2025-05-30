@@ -48,7 +48,7 @@ def load_and_preprocess_images(image_paths, target_size=(224, 224)):
             images.append(img)
     return np.array(images)
 
-def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, num_classes=None, save_numpy=True):
+def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True):
     logging.info("Carregando caminhos das imagens e rótulos...")
     image_paths, labels = load_image_paths_and_labels(data_dir)
 
@@ -63,7 +63,6 @@ def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, num_classes=None, s
     X_val = load_and_preprocess_images(X_val)
     X_test = load_and_preprocess_images(X_test)
 
-    # Convertendo os rótulos para arrays de inteiros (sem one-hot)
     y_train = np.array(y_train)
     y_val = np.array(y_val)
     y_test = np.array(y_test)
@@ -81,7 +80,7 @@ def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, num_classes=None, s
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 # RF
-def preprocess_image_rf(path, target_size=(64, 64)):
+def preprocess_image_rf(path, target_size=(224, 224)):
     """
     Pré-processa uma imagem para modelos tradicionais (Random Forest, SVM) com menor resolução.
     """
@@ -98,7 +97,7 @@ def preprocess_image_rf(path, target_size=(64, 64)):
         logging.error(f"Erro ao processar a imagem {path}: {e}")
         return None
 
-def load_and_preprocess_images_rf(image_paths, target_size=(64, 64)):
+def load_and_preprocess_images_rf(image_paths, target_size=(224, 224)):
     """
     Carrega e pré-processa imagens em baixa resolução (64x64).
     """

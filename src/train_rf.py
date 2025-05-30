@@ -3,7 +3,7 @@ import logging
 import joblib
 import numpy as np
 from preprocessing import prepare_dataset_rf
-from train_utils import flatten_images, get_rf_pipeline, load_cached_data  # <- NOVO
+from train_utils import flatten_images, get_rf_pipeline, load_cached_data
 
 logging.basicConfig(level=logging.INFO)
 

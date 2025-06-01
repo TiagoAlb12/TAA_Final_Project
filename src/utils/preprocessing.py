@@ -4,6 +4,10 @@ import os
 from tqdm import tqdm
 from .train_utils import load_cached_data
 from sklearn.model_selection import train_test_split
+from PIL import Image
+import imagehash
+from collections import defaultdict
+from random import shuffle
 
 def load_image_paths_and_labels(data_dir):
     if not os.path.exists(data_dir):
@@ -37,11 +41,39 @@ def preprocess_image(path, target_size=(224, 224)):
         img = cv2.resize(img, target_size)
         img = cv2.GaussianBlur(img, (3, 3), 0)
         img = img / 255.0
+        img = img.astype(np.float16)
         img = np.expand_dims(img, axis=-1)
         return img
     except Exception as e:
         print(f"Error processing image {path}: {e}")
         return None
+
+def group_duplicates_by_hash(image_paths, target_size=(224, 224)):
+    print("Checking for duplicates using perceptual hashes...")
+    hash_groups = defaultdict(list)
+    for path in tqdm(image_paths, desc="Hashing images"):
+        try:
+            pil_img = Image.open(path).convert("L").resize(target_size)
+            hash_val = str(imagehash.phash(pil_img))
+            hash_groups[hash_val].append(path)
+        except Exception as e:
+            print(f"Hashing error for {path}: {e}")
+    return list(hash_groups.values())
+
+def split_hash_groups(groups, labels_dict, test_size=0.15, val_size=0.15):
+    shuffle(groups)
+    all_samples = [(path, labels_dict[path]) for group in groups for path in group]
+
+    # Reconstruct labels for stratified splitting
+    group_labels = [labels_dict[group[0]] for group in groups]
+
+    train_val_groups, test_groups = train_test_split(groups, test_size=test_size, stratify=group_labels)
+    train_val_labels = [labels_dict[group[0]] for group in train_val_groups]
+
+    train_groups, val_groups = train_test_split(train_val_groups, test_size=val_size / (1 - test_size), stratify=train_val_labels)
+
+    split_paths = lambda g: [p for group in g for p in group]
+    return split_paths(train_groups), split_paths(val_groups), split_paths(test_groups)
 
 def load_and_preprocess_images(image_paths, target_size=(224, 224)):
     images = []
@@ -49,8 +81,7 @@ def load_and_preprocess_images(image_paths, target_size=(224, 224)):
         img = preprocess_image(path, target_size)
         if img is not None:
             images.append(img)
-    return np.array(images)
-
+    return np.array(images, dtype=np.float16)
 
 def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True, force=False):
     if not force:
@@ -64,33 +95,28 @@ def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True, fo
 
     print("Loading image paths and labels...")
     image_paths, labels = load_image_paths_and_labels(data_dir)
+    labels_dict = {path: label for path, label in zip(image_paths, labels)}
 
-    if len(image_paths) == 0 or len(set(labels)) < 2:
-        raise ValueError("Not enough data to split. Ensure the dataset contains images from at least two classes.")
+    hash_groups = group_duplicates_by_hash(image_paths)
+    X_train_paths, X_val_paths, X_test_paths = split_hash_groups(hash_groups, labels_dict, test_size, val_size)
 
-    X_train_val, X_test, y_train_val, y_test = train_test_split(
-        image_paths, labels, test_size=test_size, stratify=labels)
-
-    X_train, X_val, y_train, y_val = train_test_split(
-        X_train_val, y_train_val, test_size=val_size / (1 - test_size), stratify=y_train_val)
+    y_train = [labels_dict[x] for x in X_train_paths]
+    y_val = [labels_dict[x] for x in X_val_paths]
+    y_test = [labels_dict[x] for x in X_test_paths]
 
     print("Preprocessing images...")
-    X_train = load_and_preprocess_images(X_train)
-    X_val = load_and_preprocess_images(X_val)
-    X_test = load_and_preprocess_images(X_test)
 
-    y_train = np.array(y_train)
-    y_val = np.array(y_val)
-    y_test = np.array(y_test)
+    X_train = load_and_preprocess_images(X_train_paths)
+    X_val = load_and_preprocess_images(X_val_paths)
+    X_test = load_and_preprocess_images(X_test_paths)
 
     if save_numpy:
-        print("Saving preprocessed arrays to .npy files...")
         np.save("X_train.npy", X_train)
-        np.save("y_train.npy", y_train)
+        np.save("y_train.npy", np.array(y_train))
         np.save("X_val.npy", X_val)
-        np.save("y_val.npy", y_val)
+        np.save("y_val.npy", np.array(y_val))
         np.save("X_test.npy", X_test)
-        np.save("y_test.npy", y_test)
+        np.save("y_test.npy", np.array(y_test))
 
     print("Preprocessing completed.")
-    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+    return (X_train, np.array(y_train)), (X_val, np.array(y_val)), (X_test, np.array(y_test))

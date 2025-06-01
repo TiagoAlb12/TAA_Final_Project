@@ -1,8 +1,9 @@
 import numpy as np
 import cv2
 import os
-from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+from .train_utils import load_cached_data
+from sklearn.model_selection import train_test_split
 
 def load_image_paths_and_labels(data_dir):
     if not os.path.exists(data_dir):
@@ -51,7 +52,16 @@ def load_and_preprocess_images(image_paths, target_size=(224, 224)):
     return np.array(images)
 
 
-def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True):
+def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True, force=False):
+    if not force:
+        cached = load_cached_data()
+        if cached:
+            use_cached = input("Cached dataset found. Reprocess images? (y/n): ").strip().lower()
+            if use_cached != 'y':
+                return cached
+            else:
+                print("Reprocessing dataset...")
+
     print("Loading image paths and labels...")
     image_paths, labels = load_image_paths_and_labels(data_dir)
 

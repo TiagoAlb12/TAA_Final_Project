@@ -14,12 +14,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
 
-    cached = load_cached_data()
-    if cached:
-        (X_train, y_train), (X_val, y_val), _ = cached
-    else:
-        print("Data not found in cache. Processing images...")
-        (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
+    (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
 
     X_train = X_train.astype(np.float32)
     X_val = X_val.astype(np.float32)

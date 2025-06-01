@@ -24,6 +24,9 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
 
     X_test_flat = X_test.reshape((X_test.shape[0], -1))
 
+    # Define class names
+    class_names = ['MildDemented', 'ModerateDemented', 'NonDemented', 'VeryMildDemented']
+
     print("Making predictions...")
     y_pred = model.predict(X_test_flat)
     y_probs = model.predict_proba(X_test_flat)
@@ -32,7 +35,7 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
     acc = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {acc:.4f}")
 
-    report = classification_report(y_test, y_pred, digits=4)
+    report = classification_report(y_test, y_pred, target_names=class_names, digits=4)
     cm = confusion_matrix(y_test, y_pred)
 
     # Print
@@ -44,7 +47,7 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
         f.write(report)
 
     # Save confusion matrix as image
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Greens")
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Greens", xticklabels=class_names, yticklabels=class_names)
     plt.xlabel("Predicted")
     plt.ylabel("True")
     plt.title("Random Forest Confusion Matrix")

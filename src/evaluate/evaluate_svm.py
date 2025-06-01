@@ -15,6 +15,9 @@ def run_svm_evaluation(model_path="svm_model.pkl", output_dir="results/svm"):
     X_test = np.load("features_X_test.npy")
     y_test = np.load("features_y_test.npy")
 
+    # Define class names
+    class_names = ['MildDemented', 'ModerateDemented', 'NonDemented', 'VeryMildDemented']
+
     print("Making predictions...")
     y_pred = model.predict(X_test)
     if hasattr(model, "predict_proba"):
@@ -24,7 +27,7 @@ def run_svm_evaluation(model_path="svm_model.pkl", output_dir="results/svm"):
     acc = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {acc:.4f}")
 
-    report = classification_report(y_test, y_pred, digits=4)
+    report = classification_report(y_test, y_pred, target_names=class_names, digits=4)
     cm = confusion_matrix(y_test, y_pred)
 
     print("\nClassification Report:\n", report)
@@ -35,7 +38,7 @@ def run_svm_evaluation(model_path="svm_model.pkl", output_dir="results/svm"):
         f.write(report)
 
     # Save confusion matrix image
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names)
     plt.xlabel("Predicted")
     plt.ylabel("True")
     plt.title("SVM Confusion Matrix")

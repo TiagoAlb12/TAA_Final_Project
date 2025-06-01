@@ -5,7 +5,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-def run_rf_training(model_path="rf_model.pkl", use_pca=False, use_weighted_classes=None):
+def run_rf_training(model_path="rf_model.pkl", use_weighted_classes=None):
     print("Loading extracted features...")
     X_train = np.load("features_X_train.npy")
     y_train = np.load("features_y_train.npy")
@@ -20,7 +20,7 @@ def run_rf_training(model_path="rf_model.pkl", use_pca=False, use_weighted_class
 
     class_weight = 'balanced' if use_weighted_classes else None
 
-    print(f"Creating Random Forest pipeline (weighted classes: {use_weighted_classes})...")
+    print(f"Creating Random Forest (weighted classes: {use_weighted_classes})...")
     rf = RandomForestClassifier(
         n_estimators=200,
         class_weight=class_weight,
@@ -28,16 +28,9 @@ def run_rf_training(model_path="rf_model.pkl", use_pca=False, use_weighted_class
         random_state=42
     )
 
-    if use_pca:
-        print("Adding PCA to pipeline...")
-        pca = PCA(n_components=0.99, svd_solver='full')
-        model = make_pipeline(pca, rf)
-    else:
-        model = rf
-
     with tqdm(total=1, desc="Training Random Forest") as pbar:
-        model.fit(X_train, y_train)
+        rf.fit(X_train, y_train)
         pbar.update(1)
 
-    joblib.dump(model, model_path)
+    joblib.dump(rf, model_path)
     print(f"Model saved to {model_path}")

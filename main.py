@@ -149,7 +149,7 @@ def menu():
                 print("Invalid choice. Please select from: cnn / svm / rf / all.")
                 continue
 
-            interactive = input("Use interactive mode for parameters, i.e, require user input? (y/n): ").strip().lower() == 'y'
+            interactive = input("Use interactive mode for parameters, i.e., require user input? (y/n): ").strip().lower() == 'y'
 
             # CNN
             if pipeline_choice in ('cnn', 'all'):
@@ -176,19 +176,33 @@ def menu():
                     print(f"Feature extraction failed: {e}")
                     continue
 
+            # SVM
             if pipeline_choice in ('svm', 'all'):
                 print("\n--- Running SVM pipeline ---")
                 try:
-                    run_svm_training(model_path="svm_model.pkl")
-                    run_svm_evaluation(model_path="svm_model.pkl", output_dir=os.path.join(results_root, "svm"))
+                    run_svm_training(
+                        model_path=model_path_svm,
+                        use_weighted_classes=None if interactive else False
+                    )
+                    run_svm_evaluation(
+                        model_path=model_path_svm,
+                        output_dir=os.path.join(results_root, "svm")
+                    )
                 except Exception as e:
                     print(f"SVM pipeline failed: {e}")
 
+            # RF
             if pipeline_choice in ('rf', 'all'):
                 print("\n--- Running Random Forest pipeline ---")
                 try:
-                    run_rf_training(model_path="rf_model.pkl")
-                    run_rf_evaluation(model_path="rf_model.pkl", output_dir=os.path.join(results_root, "rf"))
+                    run_rf_training(
+                        model_path=model_path_rf,
+                        use_weighted_classes=None if interactive else True
+                    )
+                    run_rf_evaluation(
+                        model_path=model_path_rf,
+                        output_dir=os.path.join(results_root, "rf")
+                    )
                 except Exception as e:
                     print(f"Random Forest pipeline failed: {e}")
 

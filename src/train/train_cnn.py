@@ -5,9 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from models import get_resnet18
-from preprocessing import prepare_dataset
-from train_utils import load_cached_data
+from ..models.resnet import get_resnet18
+from ..utils.preprocessing import prepare_dataset
+from ..utils.train_utils import load_cached_data
 import numpy as np
 from tqdm import tqdm
 
@@ -145,8 +145,8 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
             torch.save(model.state_dict(), model_save_path)
         else:
             patience_counter += 1
-            if patience_counter >= patience:
-                logging.info("Early stopping due to no improvement in validation loss.") # Not in last epoch
+            if patience_counter >= patience and epoch < epochs - 1:  # Avoid early stopping in the last epoch
+                logging.info("Early stopping due to no improvement in validation loss.")
                 break
 
     logging.info("Training finished. Saving history...")

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc, precision_recall_curve
 import torch
-from models import get_resnet18
+from ..models.resnet import get_resnet18
 import torchvision.transforms as transforms
 
 def evaluate_model(model_path, X_test, y_test, output_dir='results', device=None):

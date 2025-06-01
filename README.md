@@ -23,49 +23,10 @@ Final Group Project TAA
 
 Make sure all dependencies are installed before running the project.
 
-# CNN Algorithm:
+# Running
 
-*(Inside the venv)*
-
-## 1. Prepare data (only needed once)
+Just run main with 
 ```bash
-python3 src/main.py --task prepare --data_dir images/OriginalDataset
+python3 main.py
 ```
-
-## 2. Train with ResNet18
-```bash
-python3 src/main.py --task train --model_type cnn --data_dir images/OriginalDataset --model_path cnn_resnet18.pth --epochs 30 --batch_size 32
-```
-
-## 3. Evaluate model
-```bash
-python3 src/main.py --task evaluate --model_type cnn --data_dir images/OriginalDataset --model_path cnn_resnet18.pth --output_dir results_resnet
-```
-
-# SVM Algorithm:
-
-*(Specific script)*
-
-## 1. Activate the venv
-
-## 2. Go to src/utils
-
-## 3. Run the following commands:
-```bash
-chmod +x run_svm.sh
-./run_svm.sh
-```
-
-# Algoritmo RF
-
-*(Specific script)*
-
-## 1. Activate the venv
-
-## 2. Go to src/utils
-
-## 3. Run the following commands:
-```bash
-chmod +x run_rf.sh
-./run_rf.sh
-```
+and chose what you wish to do. Simple!

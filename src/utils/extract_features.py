@@ -6,7 +6,6 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 import numpy as np
 import os
-import argparse
 
 def extract_and_split_features(data_dir, test_ratio=0.2, batch_size=32):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -42,25 +41,30 @@ def extract_and_split_features(data_dir, test_ratio=0.2, batch_size=32):
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size)
 
-    print("[✓] Extraindo features de treino...")
     X_train, y_train = extract(train_loader)
-    print("[✓] Extraindo features de teste...")
     X_test, y_test = extract(test_loader)
 
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    np.save(os.path.join(root_dir, "X_train.npy"), X_train)
-    np.save(os.path.join(root_dir, "y_train.npy"), y_train)
-    np.save(os.path.join(root_dir, "X_test.npy"), X_test)
-    np.save(os.path.join(root_dir, "y_test.npy"), y_test)
+    np.save("features_X_train.npy", X_train)
+    np.save("features_y_train.npy", y_train)
+    np.save("features_X_test.npy", X_test)
+    np.save("features_y_test.npy", y_test)
 
-    print(f"[✓] Dados salvos em {root_dir}")
-    print(f"[✓] Classes: {class_names}")
+    print("[✓] Features extracted and saved.")
+    print(f"Classes: {class_names}")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, required=True)
-    parser.add_argument('--test_ratio', type=float, default=0.2)
-    parser.add_argument('--batch_size', type=int, default=32)
-    args = parser.parse_args()
+def run_feature_extraction(data_dir, force=False):
+    required_files = [
+        "features_X_train.npy",
+        "features_y_train.npy",
+        "features_X_test.npy",
+        "features_y_test.npy"
+    ]
 
-    extract_and_split_features(args.data_dir, args.test_ratio, args.batch_size)
+    if not force and all(os.path.exists(f) for f in required_files):
+        choice = input("Feature files already exist. Re-extract features? (y/n): ").strip().lower()
+        if choice != 'y':
+            print("Skipping feature extraction.")
+            return
+
+    print("Extracting features using ResNet18...")
+    extract_and_split_features(data_dir)

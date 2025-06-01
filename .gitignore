@@ -183,4 +183,4 @@ cython_debug/
 *.png
 
 # Results
-results_resnet/
+results*/

@@ -26,6 +26,8 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
 
     print("Making predictions...")
     y_pred = model.predict(X_test_flat)
+    y_probs = model.predict_proba(X_test_flat)
+    np.save(os.path.join(output_dir, "rf_probs.npy"), y_probs)
 
     acc = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {acc:.4f}")

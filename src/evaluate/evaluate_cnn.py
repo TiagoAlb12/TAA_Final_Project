@@ -52,6 +52,7 @@ def evaluate_model(model_path, X_test, y_test, output_dir='results', device=None
         y_pred_logits = model(X_test_tensor)
         y_pred = torch.softmax(y_pred_logits, dim=1).cpu().numpy()
         y_pred_labels = np.argmax(y_pred, axis=1)
+        np.save(os.path.join(output_dir, "cnn_probs.npy"), y_pred)
     end = time.time()
 
     avg_inf_time = (end - start) / len(X_test)

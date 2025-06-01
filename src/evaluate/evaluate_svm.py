@@ -17,6 +17,9 @@ def run_svm_evaluation(model_path="svm_model.pkl", output_dir="results/svm"):
 
     print("Making predictions...")
     y_pred = model.predict(X_test)
+    if hasattr(model, "predict_proba"):
+        y_probs = model.predict_proba(X_test)
+        np.save(os.path.join(output_dir, "svm_probs.npy"), y_probs)
 
     acc = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {acc:.4f}")

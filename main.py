@@ -6,6 +6,7 @@ from src.train.train_svm_with_features import run_svm_training
 from src.evaluate.evaluate_svm import run_svm_evaluation
 from src.train.train_rf import run_rf_training
 from src.evaluate.evaluate_rf import run_rf_evaluation
+from src.evaluate.evaluate_ensemble import run_ensemble_evaluation
 import os
 import glob
 import shutil
@@ -109,7 +110,7 @@ def menu():
                 run_rf_training(model_path=model_path_rf)
 
         elif choice == '3':
-            model_type = input("Model type to evaluate (cnn / svm / rf): ").strip().lower()
+            model_type = input("Model type to evaluate (cnn / svm / rf / ensemble): ").strip().lower()
             output_dir_custom = input(f"Enter subdirectory name for this model [default: {model_type}]: ").strip()
             subfolder = output_dir_custom or model_type
             output_dir_eval = os.path.join(results_root, subfolder)
@@ -136,6 +137,9 @@ def menu():
                     print(f"Model file '{model_path_rf}' not found. Please train the model first.")
                     continue
                 run_rf_evaluation(model_path=model_path_rf, output_dir=output_dir_eval)
+
+            elif model_type == 'ensemble':
+                run_ensemble_evaluation(results_root=results_root)
 
             else:
                 print("Unsupported model type.")

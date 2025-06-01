@@ -10,9 +10,15 @@ from ..utils.train_utils import load_cached_data
 import numpy as np
 from tqdm import tqdm
 
-def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, device=None):
+def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, device=None, use_weighted_classes=None):
     device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Using device: {device}")
+
+    if use_weighted_classes is None:
+        print("Note: CNNs are generally less sensitive to class imbalance,")
+        print("so model performance is usually not heavily affected.")
+        resp = input("Use weighted classes for CNN? (y/n) [default: n]: ").strip().lower()
+        use_weighted_classes = (resp == 'y')
 
     (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
 
@@ -62,7 +68,14 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
     model = get_resnet18(num_classes=4, grayscale=True).to(device)
-    criterion = nn.CrossEntropyLoss()
+    if use_weighted_classes:
+        print("Applying weighted classes to CrossEntropyLoss.")
+        from sklearn.utils.class_weight import compute_class_weight
+        class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+        class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=3e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
 

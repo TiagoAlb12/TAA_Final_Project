@@ -23,6 +23,9 @@ def load_image_paths_and_labels(data_dir):
                     image_paths.append(os.path.join(class_dir, file_name))
                     labels.append(class_to_index[class_name])
 
+    if len(image_paths) == 0:
+        raise ValueError(f"No images found in directory '{data_dir}'. Make sure it contains valid images.")
+
     return image_paths, labels
 
 def preprocess_image(path, target_size=(224, 224)):
@@ -51,6 +54,9 @@ def load_and_preprocess_images(image_paths, target_size=(224, 224)):
 def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True):
     print("Loading image paths and labels...")
     image_paths, labels = load_image_paths_and_labels(data_dir)
+
+    if len(image_paths) == 0 or len(set(labels)) < 2:
+        raise ValueError("Not enough data to split. Ensure the dataset contains images from at least two classes.")
 
     X_train_val, X_test, y_train_val, y_test = train_test_split(
         image_paths, labels, test_size=test_size, stratify=labels)

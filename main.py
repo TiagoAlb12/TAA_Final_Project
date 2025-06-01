@@ -46,6 +46,10 @@ def menu():
     print("Alzheimer Classification Pipeline Ready")
 
     data_dir = input("Enter dataset directory path [default: ./images/OriginalDataset]: ").strip() or "./images/OriginalDataset"
+    while not os.path.isdir(data_dir):
+        print(f"Error: Provided dataset directory '{data_dir}' does not exist.")
+        data_dir = input("Enter dataset directory path [default: ./images/OriginalDataset]: ").strip() or "./images/OriginalDataset"
+        
     model_path = input("Enter path to save the model [default: cnn_resnet18.pth]: ").strip() or "cnn_resnet18.pth"
     results_root = input("Enter base results directory [default: results]: ").strip() or "results"
 
@@ -61,25 +65,37 @@ def menu():
 
         if choice == '1':
             print("Preparing dataset...")
-            prepare_dataset(data_dir, save_numpy=True)
-            print("Dataset preparation complete.")
+            try:
+                prepare_dataset(data_dir, save_numpy=True)
+                print("Dataset preparation complete.")
+            except ValueError as e:
+                print(f"Dataset preparation failed: {e}")
+
 
         elif choice == '2':
             model_type = input("Select model type (cnn / svm / rf): ").strip().lower()
             
             if model_type == 'cnn':
                 batch_size = int(input("Batch size [default: 32]: ") or 32)
-                epochs = int(input("Number of epochs [default: 10]: ") or 10)
+                epochs = int(input("Number of epochs [default: 30]: ") or 30)
                 patience = int(input("Early stopping patience [default: 5]: ") or 5)
                 train_model(model_type, data_dir, model_path, batch_size, epochs, patience)
 
             elif model_type == 'svm':
-                run_feature_extraction(data_dir)
+                try:
+                    run_feature_extraction(data_dir)
+                except Exception as e:
+                    print(f"Feature extraction failed: {e}")
+                    continue
                 print("Training SVM model...")
                 run_svm_training()
 
             elif model_type == 'rf':
-                run_feature_extraction(data_dir)
+                try:
+                    run_feature_extraction(data_dir)
+                except Exception as e:
+                    print(f"Feature extraction failed: {e}")
+                    continue
                 print("Training Random Forest model...")
                 run_rf_training()
 
@@ -93,7 +109,14 @@ def menu():
             output_dir_eval = os.path.join(results_root, subfolder)
 
             if model_type == 'cnn':
-                (_, _), (_, _), (X_test, y_test) = prepare_dataset(data_dir, save_numpy=True)
+                if not os.path.exists(model_path):
+                    print(f"Model file '{model_path}' not found. Please train the model first.")
+                    continue
+                try:
+                    (_, _), (_, _), (X_test, y_test) = prepare_dataset(data_dir, save_numpy=True)
+                except ValueError as e:
+                    print(f"Dataset preparation failed: {e}")
+                    continue
                 evaluate_model(model_path, X_test, y_test, output_dir=output_dir_eval)
 
             elif model_type == 'svm':

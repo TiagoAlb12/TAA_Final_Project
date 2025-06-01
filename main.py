@@ -7,6 +7,7 @@ from src.evaluate.evaluate_svm import run_svm_evaluation
 from src.train.train_rf import run_rf_training
 from src.evaluate.evaluate_rf import run_rf_evaluation
 from src.evaluate.evaluate_ensemble import run_ensemble_evaluation
+from src.utils.classify_image import classify_single_image
 import os
 import glob
 import shutil
@@ -68,8 +69,9 @@ def menu():
         print("2. Train model")
         print("3. Evaluate model")
         print("4. Run full pipeline")
-        print("5. Reconfigure setup")
-        print("6. Cleanup generated files")
+        print("5. Classify single image")
+        print("6. Reconfigure setup")
+        print("7. Cleanup generated files")
         print("0. Exit")
         choice = input("Select an option: ").strip()
 
@@ -213,10 +215,37 @@ def menu():
             print("\nSelected pipeline(s) complete.")
 
         elif choice == '5':
+            print("\nClassify single image...")
+
+            model_choice = input("Choose model to use (cnn / svm / rf): ").strip().lower()
+
+            if model_choice == "cnn":
+                model_path = model_path_cnn
+            elif model_choice == "svm":
+                model_path = model_path_svm
+            elif model_choice == "rf":
+                model_path = model_path_rf
+            else:
+                print("Invalid model type.")
+                continue
+
+            img_path = input("Enter path to image file: ").strip()
+
+            if not os.path.exists(img_path):
+                print(f"Error: File '{img_path}' not found.")
+                continue
+
+            try:
+                prediction = classify_single_image(model_choice, model_path, img_path)
+                print(f"Predicted class: {prediction}")
+            except Exception as e:
+                print(f"Classification failed: {e}")
+
+        elif choice == '6':
             print("\nReconfiguring setup...")
             data_dir, model_path_cnn, model_path_svm, model_path_rf, results_root = setup_paths()
 
-        elif choice == '6':
+        elif choice == '7':
             print("Cleaning up generated files...")
             cleanup_generated_files(results_root)
 

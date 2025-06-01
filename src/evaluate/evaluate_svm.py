@@ -5,11 +5,11 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def run_svm_evaluation(output_dir="results/svm"):
+def run_svm_evaluation(model_path="svm_model.pkl", output_dir="results/svm"):
     os.makedirs(output_dir, exist_ok=True)
 
-    print("Loading SVM model...")
-    model = joblib.load("svm_model.pkl")
+    print(f"Loading SVM model from {model_path}...")
+    model = joblib.load(model_path)
 
     print("Loading test data...")
     X_test = np.load("features_X_test.npy")
@@ -24,7 +24,6 @@ def run_svm_evaluation(output_dir="results/svm"):
     report = classification_report(y_test, y_pred, digits=4)
     cm = confusion_matrix(y_test, y_pred)
 
-    # Print
     print("\nClassification Report:\n", report)
     print("\nConfusion Matrix:\n", cm)
 
@@ -32,7 +31,7 @@ def run_svm_evaluation(output_dir="results/svm"):
     with open(os.path.join(output_dir, "classification_report.txt"), "w") as f:
         f.write(report)
 
-    # Save confusion matrix as image
+    # Save confusion matrix image
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
     plt.xlabel("Predicted")
     plt.ylabel("True")

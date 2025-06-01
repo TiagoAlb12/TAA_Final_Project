@@ -10,8 +10,6 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
     os.makedirs(output_dir, exist_ok=True)
 
     print("Loading Random Forest model...")
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file not found: {model_path}")
     model = joblib.load(model_path)
 
     if not os.path.exists("features_X_test.npy") or not os.path.exists("features_y_test.npy"):

@@ -33,4 +33,4 @@ def run_rf_training(model_path="rf_model.pkl", use_pca=False):
     model.fit(X_train, y_train)
 
     joblib.dump(model, model_path)
-    logging.info(f"[✓] Model saved to {model_path}")
+    logging.info(f"Model saved to {model_path}")

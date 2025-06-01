@@ -1,4 +1,3 @@
-import logging
 import json
 import torch
 import torch.nn as nn
@@ -11,17 +10,15 @@ from ..utils.train_utils import load_cached_data
 import numpy as np
 from tqdm import tqdm
 
-logging.basicConfig(level=logging.INFO)
-
 def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, device=None):
     device = device or ('cuda' if torch.cuda.is_available() else 'cpu')
-    logging.info(f"Using device: {device}")
+    print(f"Using device: {device}")
 
     cached = load_cached_data()
     if cached:
         (X_train, y_train), (X_val, y_val), _ = cached
     else:
-        logging.info("Data not found in cache. Processing images...")
+        print("Data not found in cache. Processing images...")
         (X_train, y_train), (X_val, y_val), _ = prepare_dataset(data_dir, save_numpy=True)
 
     X_train = X_train.astype(np.float32)
@@ -78,7 +75,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
     patience_counter = 0
     history = {'loss': [], 'val_loss': [], 'accuracy': [], 'val_accuracy': []}
 
-    logging.info("Starting training...")
+    print("Starting training...")
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
@@ -137,7 +134,7 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         history['accuracy'].append(train_acc)
         history['val_accuracy'].append(val_acc)
 
-        logging.info(f"Epoch {epoch+1}/{epochs} - loss: {train_loss:.4f} - acc: {train_acc:.4f} - val_loss: {val_loss:.4f} - val_acc: {val_acc:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} - loss: {train_loss:.4f} - acc: {train_acc:.4f} - val_loss: {val_loss:.4f} - val_acc: {val_acc:.4f}")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -146,12 +143,12 @@ def train_cnn(data_dir, model_save_path, batch_size=32, epochs=30, patience=5, d
         else:
             patience_counter += 1
             if patience_counter >= patience and epoch < epochs - 1:  # Avoid early stopping in the last epoch
-                logging.info("Early stopping due to no improvement in validation loss.")
+                print("Early stopping due to no improvement in validation loss.")
                 break
 
-    logging.info("Training finished. Saving history...")
+    print("Training finished. Saving history...")
     with open('training_history.json', 'w') as f:
         json.dump(history, f)
 
-    logging.info(f"Model saved at: {model_save_path}")
+    print(f"Model saved at: {model_save_path}")
     return history

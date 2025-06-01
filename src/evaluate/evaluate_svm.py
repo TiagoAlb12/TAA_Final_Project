@@ -1,28 +1,25 @@
 import numpy as np
 import joblib
-import logging
 import os
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-logging.basicConfig(level=logging.INFO)
-
 def run_svm_evaluation(output_dir="results/svm"):
     os.makedirs(output_dir, exist_ok=True)
 
-    logging.info("Loading SVM model...")
-    model = joblib.load("svm_resnet_model.pkl")
+    print("Loading SVM model...")
+    model = joblib.load("svm_model.pkl")
 
-    logging.info("Loading test data...")
+    print("Loading test data...")
     X_test = np.load("features_X_test.npy")
     y_test = np.load("features_y_test.npy")
 
-    logging.info("Making predictions...")
+    print("Making predictions...")
     y_pred = model.predict(X_test)
 
     acc = accuracy_score(y_test, y_pred)
-    logging.info(f"Accuracy: {acc:.4f}")
+    print(f"Accuracy: {acc:.4f}")
 
     report = classification_report(y_test, y_pred, digits=4)
     cm = confusion_matrix(y_test, y_pred)

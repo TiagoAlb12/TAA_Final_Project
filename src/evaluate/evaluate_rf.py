@@ -1,17 +1,15 @@
 import numpy as np
 import joblib
-import logging
 import os
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-logging.basicConfig(level=logging.INFO)
 
 def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
     os.makedirs(output_dir, exist_ok=True)
 
-    logging.info("Loading Random Forest model...")
+    print("Loading Random Forest model...")
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found: {model_path}")
     model = joblib.load(model_path)
@@ -19,7 +17,7 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
     if not os.path.exists("features_X_test.npy") or not os.path.exists("features_y_test.npy"):
         raise FileNotFoundError("Test data files not found. Run feature extraction first.")
 
-    logging.info("Loading test data...")
+    print("Loading test data...")
     X_test = np.load("features_X_test.npy")
     y_test = np.load("features_y_test.npy")
 
@@ -28,11 +26,11 @@ def run_rf_evaluation(model_path="rf_model.pkl", output_dir="results/rf"):
 
     X_test_flat = X_test.reshape((X_test.shape[0], -1))
 
-    logging.info("Making predictions...")
+    print("Making predictions...")
     y_pred = model.predict(X_test_flat)
 
     acc = accuracy_score(y_test, y_pred)
-    logging.info(f"Accuracy: {acc:.4f}")
+    print(f"Accuracy: {acc:.4f}")
 
     report = classification_report(y_test, y_pred, digits=4)
     cm = confusion_matrix(y_test, y_pred)

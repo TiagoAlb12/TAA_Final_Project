@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import os
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 def load_image_paths_and_labels(data_dir):
     if not os.path.exists(data_dir):
@@ -40,11 +41,12 @@ def preprocess_image(path, target_size=(224, 224)):
 
 def load_and_preprocess_images(image_paths, target_size=(224, 224)):
     images = []
-    for path in image_paths:
+    for path in tqdm(image_paths, desc="Preprocessing images"):
         img = preprocess_image(path, target_size)
         if img is not None:
             images.append(img)
     return np.array(images)
+
 
 def prepare_dataset(data_dir, test_size=0.15, val_size=0.15, save_numpy=True):
     print("Loading image paths and labels...")

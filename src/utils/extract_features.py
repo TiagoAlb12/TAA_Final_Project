@@ -6,6 +6,7 @@ from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
 import numpy as np
 import os
+from tqdm import tqdm
 
 def extract_and_split_features(data_dir, test_ratio=0.2, batch_size=32):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -28,10 +29,10 @@ def extract_and_split_features(data_dir, test_ratio=0.2, batch_size=32):
 
     train_data, test_data = random_split(dataset, [num_train, num_test])
 
-    def extract(loader):
+    def extract(loader, desc=""):
         features, labels = [], []
         with torch.no_grad():
-            for images, targets in loader:
+            for images, targets in tqdm(loader, desc=desc):
                 images = images.to(device)
                 outputs = model(images)
                 features.append(outputs.cpu().numpy())
@@ -41,15 +42,15 @@ def extract_and_split_features(data_dir, test_ratio=0.2, batch_size=32):
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size)
 
-    X_train, y_train = extract(train_loader)
-    X_test, y_test = extract(test_loader)
+    X_train, y_train = extract(train_loader, desc="Extracting train features")
+    X_test, y_test = extract(test_loader, desc="Extracting test features")
 
     np.save("features_X_train.npy", X_train)
     np.save("features_y_train.npy", y_train)
     np.save("features_X_test.npy", X_test)
     np.save("features_y_test.npy", y_test)
 
-    print("[✓] Features extracted and saved.")
+    print("Features extracted and saved.")
     print(f"Classes: {class_names}")
 
 def run_feature_extraction(data_dir, force=False):
@@ -66,5 +67,5 @@ def run_feature_extraction(data_dir, force=False):
             print("Skipping feature extraction.")
             return
 
-    print("Extracting features using ResNet18...")
+    print("Extracting features...")
     extract_and_split_features(data_dir)

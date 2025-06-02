@@ -217,7 +217,7 @@ def menu():
         elif choice == '5':
             print("\nClassify single image...")
 
-            model_choice = input("Choose model to use (cnn / svm / rf): ").strip().lower()
+            model_choice = input("Choose model to use (cnn / svm / rf / ensemble): ").strip().lower()
 
             if model_choice == "cnn":
                 model_path = model_path_cnn
@@ -225,6 +225,8 @@ def menu():
                 model_path = model_path_svm
             elif model_choice == "rf":
                 model_path = model_path_rf
+            elif model_choice == "ensemble":
+                model_path = [model_path_cnn, model_path_svm, model_path_rf]
             else:
                 print("Invalid model type.")
                 continue
